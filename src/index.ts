@@ -116,6 +116,75 @@ function waitFor(condition: () => boolean, timeout = 10000) {
     counter++;
   }
 }
+const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let isPlaying = false;
+
+// Create small buffers with sine wave data
+function createBuffer(frequency, duration) {
+    const buffer = audioContext.createBuffer(1, audioContext.sampleRate * duration, audioContext.sampleRate);
+    const data = buffer.getChannelData(0);
+    const phaseIncrement = 2 * Math.PI * frequency / audioContext.sampleRate;
+    let phase = 0;
+
+    for (let i = 0; i < data.length; i++) {
+        data[i] = Math.sin(phase);
+        phase += phaseIncrement;
+        if (phase >= 2 * Math.PI) phase -= 2 * Math.PI;
+    }
+
+    return buffer;
+}
+
+const buffer1 = createBuffer(440, 0.2); // 440 Hz, 2 seconds
+const buffer2 = createBuffer(660, 0.2); // 660 Hz, 2 seconds
+
+// Play a buffer and queue the next one
+function playBuffer(buffer) {
+  const source = audioContext.createBufferSource();
+  source.buffer = buffer;
+  source.connect(audioContext.destination);
+  source.start();
+
+  let nextBuffer = buffer == buffer1 ? buffer2 : buffer1;
+  source.onended = () => {
+    playBuffer(nextBuffer);
+  };
+
+  const data = buffer.getChannelData(0);
+
+
+  // Prepare next buffer
+  const freq = 25e6; // 25.000 MHz
+  const samprate = 48000;
+  const cycles = freq / samprate; // cycles to step between fetching a sample
+
+  for (var i = 0; i < data.length; i++) {
+    // jmod.tick2(1);
+    jmod.tick2(cycles);
+    // console.log(cycles);
+    data[i] = (jmod.state.audio_out - 32768.0) / 32768.0;
+
+    // const t = i / samprate;
+    // const phase = 2 * Math.PI * 1000 * t;
+    // data[i] = Math.sin(phase);
+  }
+}
+
+function startAudio() {
+  if (isPlaying) return;
+
+  // Create buffers with different frequencies
+
+  // Chain the buffers to play one after the other
+  playBuffer(buffer1, { buffer: buffer2, next: null });
+
+  isPlaying = true;
+}
+
+function setupAudio() {
+  startAudio();
+  console.log("Audio started");
+}
 
 function animationFrame(now: number) {
   requestAnimationFrame(animationFrame);
@@ -129,6 +198,19 @@ function animationFrame(now: number) {
   if (stopped || !imageData || !ctx) {
     return;
   }
+
+  // Check if audio - switch to audio only in such case
+  const audio_out = jmod.state.audio_out as number;
+  if (audio_out !== undefined) {
+
+    // if (!audioIsSetup) {
+      return;
+    // }
+
+
+    return;
+  }
+
 
   const data = new Uint8Array(imageData.data.buffer);
   frameLoop: for (let y = 0; y < 520; y++) {
@@ -192,6 +274,12 @@ document.querySelector('#share-button')?.addEventListener('click', () => {
   const newUrl = urlWithoutHash + '#' + btoa(JSON.stringify(currentProject));
   navigator.clipboard.writeText(newUrl);
 });
+
+document.querySelector('#audio-button')?.addEventListener('click', () => {
+  setupAudio();
+});
+
+
 
 function toggleButton(index: number) {
   const bit = 1 << index;
