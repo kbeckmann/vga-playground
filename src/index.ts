@@ -5,7 +5,18 @@ import { exportProject } from './exportProject';
 import { HDLModuleWASM } from './sim/hdlwasm';
 import { compileVerilator } from './verilator/compile';
 
-let currentProject = structuredClone(examples[0]);
+
+let currentProject = null;
+
+const hash = window.location.href.split('#')[1];
+
+if (hash) {
+  const jsonData = JSON.parse(atob(hash));
+  currentProject = jsonData;
+} else {
+  // Load default project
+  currentProject = structuredClone(examples[0]);
+}
 
 const inputButtons = Array.from(document.querySelectorAll('#input-values button'));
 
@@ -172,6 +183,14 @@ window.addEventListener('visibilitychange', () => {
 
 document.querySelector('#download-button')?.addEventListener('click', () => {
   exportProject(currentProject);
+});
+
+document.querySelector('#share-button')?.addEventListener('click', () => {
+  const url = new URL(window.location.href);
+  const urlWithoutHash = url.protocol + "//" + url.host + url.pathname + url.search;
+
+  const newUrl = urlWithoutHash + '#' + btoa(JSON.stringify(currentProject));
+  navigator.clipboard.writeText(newUrl);
 });
 
 function toggleButton(index: number) {

@@ -60,6 +60,15 @@ main {
   fill: white;
 }
 
+#share-button {
+  margin-left: 8px;
+}
+
+#share-button svg:hover {
+  cursor: pointer;
+  fill: white;
+}
+
 #input-values {
   padding: 8px 8px;
   color: #ccc;
