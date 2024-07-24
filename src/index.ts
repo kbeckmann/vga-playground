@@ -5,6 +5,7 @@ import { exportProject } from './exportProject';
 import { HDLModuleWASM } from './sim/hdlwasm';
 import { compileVerilator } from './verilator/compile';
 
+import noiseJs from "./noise.js?url";
 
 let currentProject = null;
 
@@ -123,7 +124,7 @@ let offset_i = 0;
 
 function startAudio() {
   const startAudioInner = async (context) => {
-    await context.audioWorklet.addModule('src/noise.js');
+    await context.audioWorklet.addModule(noiseJs);
     noiseGenerator = new AudioWorkletNode(context, 'noise-generator', {
       processorOptions: {
         foo: 42
