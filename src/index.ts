@@ -116,74 +116,61 @@ function waitFor(condition: () => boolean, timeout = 10000) {
     counter++;
   }
 }
-const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+let audioContext;
+let noiseGenerator;
 let isPlaying = false;
-
-// Create small buffers with sine wave data
-function createBuffer(frequency, duration) {
-    const buffer = audioContext.createBuffer(1, audioContext.sampleRate * duration, audioContext.sampleRate);
-    const data = buffer.getChannelData(0);
-    const phaseIncrement = 2 * Math.PI * frequency / audioContext.sampleRate;
-    let phase = 0;
-
-    for (let i = 0; i < data.length; i++) {
-        data[i] = Math.sin(phase);
-        phase += phaseIncrement;
-        if (phase >= 2 * Math.PI) phase -= 2 * Math.PI;
-    }
-
-    return buffer;
-}
-
-const buffer1 = createBuffer(440, 0.2); // 440 Hz, 2 seconds
-const buffer2 = createBuffer(660, 0.2); // 660 Hz, 2 seconds
-
-// Play a buffer and queue the next one
-function playBuffer(buffer) {
-  const source = audioContext.createBufferSource();
-  source.buffer = buffer;
-  source.connect(audioContext.destination);
-  source.start();
-
-  let nextBuffer = buffer == buffer1 ? buffer2 : buffer1;
-  source.onended = () => {
-    playBuffer(nextBuffer);
-  };
-
-  const data = buffer.getChannelData(0);
-
-
-  // Prepare next buffer
-  const freq = 25e6; // 25.000 MHz
-  const samprate = 48000;
-  const cycles = freq / samprate; // cycles to step between fetching a sample
-
-  for (var i = 0; i < data.length; i++) {
-    // jmod.tick2(1);
-    jmod.tick2(cycles);
-    // console.log(cycles);
-    data[i] = (jmod.state.audio_out - 32768.0) / 32768.0;
-
-    // const t = i / samprate;
-    // const phase = 2 * Math.PI * 1000 * t;
-    // data[i] = Math.sin(phase);
-  }
-}
+let offset_i = 0;
 
 function startAudio() {
-  if (isPlaying) return;
+  const startAudioInner = async (context) => {
+    await context.audioWorklet.addModule('src/noise.js');
+    noiseGenerator = new AudioWorkletNode(context, 'noise-generator', {
+      processorOptions: {
+        foo: 42
+      }});
+    noiseGenerator.connect(context.destination);
+    noiseGenerator.port.onmessage = (e) => {
+      const startTime = new Date().getTime();
 
-  // Create buffers with different frequencies
+      // console.log(e.data);
+      const samples = e.data;
+      const freq = jmod.state.clk_hz === undefined ? 25e6 : jmod.state.clk_hz; // Assume the design runs at 25.000 MHz
+      const samprate = context.sampleRate; // Probably 48000
+      const cycles = freq / samprate; // cycles to step between fetching a sample from the simulation
+      let data = new Float32Array(samples);
 
-  // Chain the buffers to play one after the other
-  playBuffer(buffer1, { buffer: buffer2, next: null });
+      // console.log(cycles);
+      // console.log(freq);
 
-  isPlaying = true;
-}
+      for (var i = 0; i < samples; i++) {
+        jmod.tick2(cycles);
+        const sample = (jmod.state.audio_out - 3278.0) / 65536.0;
+        data[i] = sample;
+        
+        // Uncomment to generate a perfect sine over time (no glitches)
+        // const t = (offset_i + i) / samprate;
+        // const phase = 2 * Math.PI * 440 * t;
+        // data[i] = 1.0 * Math.sin(phase);
+      }
+      // Only used for sine generator
+      offset_i += samples;
+      // console.log(data)
 
-function setupAudio() {
-  startAudio();
-  console.log("Audio started");
+      // Send the buffer with samples to the noiseGenerator thread
+      noiseGenerator.port.postMessage(data);
+
+      const endTime = new Date().getTime();
+      const timeElapsed = endTime - startTime;
+      const producedMs = 1000 * samples / samprate;
+      console.log(`Took ${timeElapsed}ms to generate ${producedMs}ms of audio. Ratio: ${timeElapsed / producedMs}`)
+
+    }
+
+    // noiseGenerator doesn't have a start function. tell context to resume, to start pulling samples.
+    context.resume();
+  };
+
+  startAudioInner(audioContext);
 }
 
 function animationFrame(now: number) {
@@ -199,18 +186,11 @@ function animationFrame(now: number) {
     return;
   }
 
-  // Check if audio - switch to audio only in such case
+  // Check if audio is availabel - switch to audio only in such case
   const audio_out = jmod.state.audio_out as number;
   if (audio_out !== undefined) {
-
-    // if (!audioIsSetup) {
-      return;
-    // }
-
-
     return;
   }
-
 
   const data = new Uint8Array(imageData.data.buffer);
   frameLoop: for (let y = 0; y < 520; y++) {
@@ -276,7 +256,18 @@ document.querySelector('#share-button')?.addEventListener('click', () => {
 });
 
 document.querySelector('#audio-button')?.addEventListener('click', () => {
-  setupAudio();
+  if (isPlaying) return;
+
+  isPlaying = true;
+  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  startAudio();
+});
+
+document.querySelector('#audio-mute-button')?.addEventListener('click', () => {
+  if (!isPlaying) return;
+
+  isPlaying = false;
+  audioContext.close();
 });
 
 
