@@ -256,6 +256,11 @@ document.querySelector('#share-button')?.addEventListener('click', () => {
   navigator.clipboard.writeText(newUrl);
 });
 
+document.querySelector('#clipboard-button')?.addEventListener('click', () => {
+  const code = btoa(JSON.stringify(currentProject.sources['project.v']));
+  navigator.clipboard.writeText(code);
+});
+
 document.querySelector('#audio-button')?.addEventListener('click', () => {
   if (isPlaying) return;
 
