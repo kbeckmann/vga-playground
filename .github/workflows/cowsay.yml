@@ -1,0 +1,31 @@
+name: Cowsay Action
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: 'Message to display with cowsay'
+        required: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Install cowsay
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cowsay
+
+      - name: Run cowsay
+        run: |
+          cowsay "$MESSAGE" > message.txt
+          echo "Message generated and saved to message.txt"
+
+      - name: Archive and upload artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: message
+          path: message.txt
