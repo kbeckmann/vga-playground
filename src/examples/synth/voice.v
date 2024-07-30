@@ -70,7 +70,8 @@ wire        CTRL_PULSE          = control[6];
 wire        CTRL_NOISE          = control[7];
 
 // assign      voice               = signal_mux;     // Use this if you want to skip the elvelope
-assign      voice               = signal_vol[19:8];
+// assign      voice               = signal_vol[19:8];
+assign      voice               = signal_vol[11:0];
 
 // Phase accumulator :
 // "As I recall, the Oscillator is a 24-bit phase-accumulating design of which
@@ -228,7 +229,7 @@ always @(posedge clk_1MHz) begin
     // calculate the resulting volume (due to the envelope generator) of the
     // voice, signal_mux(12bit) * env_counter(8bit), so the result will
     // require 20 bits !!
-    signal_vol <= signal_mux * env_counter;
+    signal_vol <= (signal_mux > (env_counter<<4)) ? (env_counter<<4) : signal_mux;
 end
 
 // Envelope generator :

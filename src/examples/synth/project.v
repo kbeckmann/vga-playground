@@ -58,11 +58,14 @@ module tt_audio_example(
 
   // wire [15:0] frequency1 = freq_out;
   // reg [ 7:0] control1 = (counter[16] & counter[17])<<6;
-  wire tmp = counter[17:0] < (1 << 16);
-  reg [ 7:0] control1 = {7'b0001000, tmp};
+  wire gate1 = counter[17:0] < (1 << 16);
+  wire gate2 = counter[18:0] < (1 << 17);
+  reg [ 7:0] control1 = {7'b0001000, gate1};
+  reg [ 7:0] control2 = {7'b0100000, gate2};
   // reg [11:0] pulsewidth1 = (1<<9);
 
- 
+ wire msb;
+
   voice #()
       Voice1(
           .clk_1MHz(clk),
@@ -74,7 +77,7 @@ module tt_audio_example(
           .Att_dec(8'h29),
           .Sus_Rel(8'h79),
           .PA_MSB_in(),
-          .PA_MSB_out(),
+          .PA_MSB_out(msb),
           .voice(voice1)
       );
   voice #()
@@ -82,16 +85,18 @@ module tt_audio_example(
           .clk_1MHz(clk),
           .reset(~rst_n),
           // .frequency((freq_out >> 1) + (freq_out == 0 ? 0: counter[17:10])),
-          .frequency((freq_out2 >> 1)),
-          .pulsewidth(1<<8),
-          .control(8'b01100000),
-          .PA_MSB_in(),
+          .frequency(freq_out2 >> 1),
+          .pulsewidth(1<<9),
+          .control(control2),
+          .Att_dec(8'h6F),
+          .Sus_Rel(8'h7A),
+          .PA_MSB_in(msb),
           .PA_MSB_out(),
           .voice(voice2)
       );
 
-    // assign audio_out = voice1 + voice2;
-    assign audio_out = voice1;
+    assign audio_out = voice1 + voice2;
+    // assign audio_out = voice2;
 
   
 endmodule
