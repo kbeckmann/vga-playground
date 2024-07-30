@@ -69,8 +69,8 @@ wire        CTRL_TRIANGLE       = control[5];
 wire        CTRL_PULSE          = control[6];
 wire        CTRL_NOISE          = control[7];
 
-assign      voice               = signal_mux;     // Use this if you want to skip the elvelope
-//assign      voice               = signal_vol[19:8];
+// assign      voice               = signal_mux;     // Use this if you want to skip the elvelope
+assign      voice               = signal_vol[19:8];
 
 // Phase accumulator :
 // "As I recall, the Oscillator is a 24-bit phase-accumulating design of which

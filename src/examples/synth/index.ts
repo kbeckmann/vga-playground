@@ -6,6 +6,7 @@ import fifo_4k_v from './fifo_4k.v?raw';
 import mos6581_buffered_player_v from './mos6581_buffered_player.v?raw';
 import mos6581_v from './mos6581.v?raw';
 import voice_v from './voice.v?raw';
+import scale_rom_v from './scale_rom.v?raw';
 
 export const synth = {
   name: 'Synth',
@@ -19,5 +20,6 @@ export const synth = {
     // 'mos6581_buffered_player.v': mos6581_buffered_player_v,
     // 'mos6581.v': mos6581_v,
     'voice.v': voice_v,
+    'scale_rom.v': scale_rom_v,
   },
 };
