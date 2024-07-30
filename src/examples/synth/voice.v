@@ -113,39 +113,42 @@ end
 // oscillator in the EXOR function of the triangle waveform generator with the
 // accumulator MSB of the previous oscillator. That is why the triangle waveform
 // must be selected to use Ring Modulation."
+wire [11:0] triangle_w;
+assign triangle = (1<<12) - 1 - triangle_w;
+
 always @(posedge clk_1MHz)
 begin
     if (CTRL_RINGMOD == 0)
     begin
         // no ringmodulation
-        triangle[11] <= accumulator[23] ^ accumulator[22];
-        triangle[10] <= accumulator[23] ^ accumulator[21];
-        triangle[9]  <= accumulator[23] ^ accumulator[20];
-        triangle[8]  <= accumulator[23] ^ accumulator[19];
-        triangle[7]  <= accumulator[23] ^ accumulator[18];
-        triangle[6]  <= accumulator[23] ^ accumulator[17];
-        triangle[5]  <= accumulator[23] ^ accumulator[16];
-        triangle[4]  <= accumulator[23] ^ accumulator[15];
-        triangle[3]  <= accumulator[23] ^ accumulator[14];
-        triangle[2]  <= accumulator[23] ^ accumulator[13];
-        triangle[1]  <= accumulator[23] ^ accumulator[12];
-        triangle[0]  <= accumulator[23] ^ accumulator[11];
+        triangle_w[11] <= accumulator[23] ^ accumulator[22];
+        triangle_w[10] <= accumulator[23] ^ accumulator[21];
+        triangle_w[9]  <= accumulator[23] ^ accumulator[20];
+        triangle_w[8]  <= accumulator[23] ^ accumulator[19];
+        triangle_w[7]  <= accumulator[23] ^ accumulator[18];
+        triangle_w[6]  <= accumulator[23] ^ accumulator[17];
+        triangle_w[5]  <= accumulator[23] ^ accumulator[16];
+        triangle_w[4]  <= accumulator[23] ^ accumulator[15];
+        triangle_w[3]  <= accumulator[23] ^ accumulator[14];
+        triangle_w[2]  <= accumulator[23] ^ accumulator[13];
+        triangle_w[1]  <= accumulator[23] ^ accumulator[12];
+        triangle_w[0]  <= accumulator[23] ^ accumulator[11];
     end
     else
     begin
         // ringmodulation by the other voice (previous voice)
-        triangle[11] <= PA_MSB_in ^ accumulator[22];
-        triangle[10] <= PA_MSB_in ^ accumulator[21];
-        triangle[9]  <= PA_MSB_in ^ accumulator[20];
-        triangle[8]  <= PA_MSB_in ^ accumulator[19];
-        triangle[7]  <= PA_MSB_in ^ accumulator[18];
-        triangle[6]  <= PA_MSB_in ^ accumulator[17];
-        triangle[5]  <= PA_MSB_in ^ accumulator[16];
-        triangle[4]  <= PA_MSB_in ^ accumulator[15];
-        triangle[3]  <= PA_MSB_in ^ accumulator[14];
-        triangle[2]  <= PA_MSB_in ^ accumulator[13];
-        triangle[1]  <= PA_MSB_in ^ accumulator[12];
-        triangle[0]  <= PA_MSB_in ^ accumulator[11];
+        triangle_w[11] <= PA_MSB_in ^ accumulator[22];
+        triangle_w[10] <= PA_MSB_in ^ accumulator[21];
+        triangle_w[9]  <= PA_MSB_in ^ accumulator[20];
+        triangle_w[8]  <= PA_MSB_in ^ accumulator[19];
+        triangle_w[7]  <= PA_MSB_in ^ accumulator[18];
+        triangle_w[6]  <= PA_MSB_in ^ accumulator[17];
+        triangle_w[5]  <= PA_MSB_in ^ accumulator[16];
+        triangle_w[4]  <= PA_MSB_in ^ accumulator[15];
+        triangle_w[3]  <= PA_MSB_in ^ accumulator[14];
+        triangle_w[2]  <= PA_MSB_in ^ accumulator[13];
+        triangle_w[1]  <= PA_MSB_in ^ accumulator[12];
+        triangle_w[0]  <= PA_MSB_in ^ accumulator[11];
     end
 end
 
